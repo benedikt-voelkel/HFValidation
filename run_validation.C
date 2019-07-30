@@ -1,21 +1,22 @@
 // AOD names
 const std::string NAME_AOD("AliAOD.root");
 const std::string NAME_VERTIXING_AOD("AliAOD.VertexingHF.root");
-const std::vector<std::string> AOD_INPUT_PATHS = { "/home/bvolkel/ALICE/software/aliceDev/ML/HF/validation/data/2018_data/l/289242/000i1"};/*,
+const std::vector<std::string> AOD_INPUT_PATHS = { "/home/bvolkel/HF/validation/data"};/*,
                                                    "/home/bvolkel/ALICE/software/aliceDev/ML/HF/validation/data/2018_data/l/289242/0002" };*/
 // Number of events to be processed
-const Int_t PROCESS_N_EVENTS = 5000;
+const Int_t PROCESS_N_EVENTS = 500;
 // Arguments for HFTreeCreator task
-const std::string MACRO_PATH_HF_TREE_CREATOR(gSystem->ExpandPathName("/home/bvolkel/ALICE/software/aliceDev/ML/HF/validation/macros/AddTaskHFTreeCreator.C"));
-const std::string MACRO_PATH_STD_LC_V0BACHELOR(gSystem->ExpandPathName("/home/bvolkel/ALICE/software/aliceDev/ML/HF/validation/macros/AddTaskLc2V0bachelor.C"));
-const std::string MACRO_PATH_STD_LC(gSystem->ExpandPathName("/home/bvolkel/ALICE/software/aliceDev/ML/HF/validation/macros/AddTaskLambdac.C"));
+const std::string MACRO_PATH_HF_TREE_CREATOR(gSystem->ExpandPathName("/home/bvolkel/HF/validation/HFValidation/macros/AddTaskHFTreeCreator.C"));
+const std::string MACRO_PATH_STD_LC_V0BACHELOR(gSystem->ExpandPathName("/home/bvolkel/HF/validation/HFValidation/macros/AddTaskLc2V0bachelor.C"));
+const std::string MACRO_PATH_STD_LC(gSystem->ExpandPathName("/home/bvolkel/HF/validation/HFValidation/macros/AddTaskLambdac.C"));
+const std::string MACRO_PATH_STD_D0(gSystem->ExpandPathName("/home/bvolkel/HF/validation/HFValidation/macros/AddTaskD0Mass.C"));
 
 // Collision system to be analysed
 enum ECollSystem {kpp=0, kpPb, kPbPb}; // 0 = pp, 1 = pPb, 2 = PbPb
 // Where to get files from (not needed now)
 const std::string IN_DIR_NAME("HFTreeCreator");
 // Cut file
-const std::string CUT_FILE_PATH("/home/bvolkel/ALICE/software/aliceDev/ML/HF/validation/data/cutfiles/tree_creator/D0DsDplusDstarLcBplusCuts_pp.root");
+const std::string CUT_FILE_PATH("/home/bvolkel/HF/validation/data/cutfiles/pp/tree_creator/D0DsDplusDstarLcBplusCuts_pp.root");
 //const std::string CUT_FILE_PATH_STD("/home/bvolkel/ALICE/software/aliceDev/ML/HF/validation/data/cutfiles/std/D0toKpiCutsValidation.root");
 // Turn on (1) or off (0) AOD protection flag
 const Int_t AOD_PROTECTION = 1;
@@ -26,11 +27,11 @@ const Bool_t IS_RUN_ON_MC = kFALSE;
 const Bool_t WRITE_ONLY_SIGNAL_TREES = kFALSE;
 const Bool_t FILL_MC_GEN_TREES = kFALSE;
 
-const Int_t FILL_TREE_D0 = 0;
+const Int_t FILL_TREE_D0 = 1;
 const Int_t FILL_TREE_Ds = 0;
 const Int_t FILL_TREE_Dplus = 0;
 const Int_t FILL_TREE_Dstar = 0;
-const Int_t FILL_TREE_LcTopKpi = 1;
+const Int_t FILL_TREE_LcTopKpi = 0;
 const Int_t FILL_TREE_Lc2V0bachelor = 0;
 const Int_t FILL_TREE_Bplus = 0;
 
@@ -64,6 +65,26 @@ const Char_t SIGN = 2;
 const Bool_t ORIGIN = kFALSE;
 const Bool_t REC_SEC_VTX = kFALSE;
 
+// Standard task D0
+const Int_t FLAG=0; /*0 = D0,1 = LS*/
+//const Bool_t readMC=kFALSE,
+const Bool_t FILL_DISTR = kFALSE;
+const Bool_t CUT_ON_DISTR = kFALSE;
+const Int_t SYSTEM = 0;/*0=pp,1=PbPb*/
+const Int_t FLAG_D0D0BAR = 0;
+const Float_t MIN_C=0;
+const Float_t MAX_C=0;
+const std::string FIN_DIRNAME = "Loose";
+const std::string FINNAME=CUT_FILE_PATH;
+//const std::string FIN_OBJ_NAME = "D0toKpiCuts";
+const Bool_t FLAG_AOD049 = kFALSE;
+const Bool_t FILL_MASS_PT = kFALSE;
+const Bool_t FILL_IMP_PAR = kFALSE;
+const Bool_t DRAW_DET_SIGNAL = kFALSE;
+const Bool_t PID_CHECK = kFALSE;
+const Bool_t FILL_MASS_Y = kFALSE;
+const Bool_t FILL_MC_ACC = kFALSE;
+//const Int_t AOD_PROTECTION = 1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Lc std task
@@ -150,6 +171,47 @@ void run_validation()
                                                                                         DEFAULT_CUT_FILE_OBJECTS["Lc2V0bachelor"].first.c_str()) ) );
   }
 
+  if(FILL_TREE_D0 == 1) {
+    AliAnalysisTaskSED0Mass *stdTask =
+      reinterpret_cast<AliAnalysisTaskSED0Mass*>(gInterpreter->ProcessLine(Form(".x %s (%d,                         \
+                                                                                        %d, %d, %d,                 \
+                                                                                        %d, %d,                     \
+                                                                                        %f, %f,                     \
+                                                                                        \"%s\", \"%s\",             \
+                                                                                        \"%s\",                     \
+                                                                                        %d, %d, %d, %d, %d, %d, %d, \
+                                                                                        %d)",
+
+                                                                                        MACRO_PATH_STD_D0.c_str(),
+
+                                                                                        FLAG,
+
+                                                                                        IS_RUN_ON_MC,
+                                                                                        FILL_DISTR,
+                                                                                        CUT_ON_DISTR,
+
+                                                                                        SYSTEM,
+                                                                                        FLAG_D0D0BAR,
+
+                                                                                        MIN_C,
+                                                                                        MAX_C,
+
+                                                                                        FIN_DIRNAME.c_str(),
+                                                                                        FINNAME.c_str(),
+                                                                                        
+                                                                                        DEFAULT_CUT_FILE_OBJECTS["D0"].second.c_str(),
+
+                                                                                        FLAG_AOD049,
+                                                                                        FILL_MASS_PT,
+                                                                                        FILL_IMP_PAR,
+                                                                                        DRAW_DET_SIGNAL,
+                                                                                        PID_CHECK,
+                                                                                        FILL_MASS_Y,
+                                                                                        FILL_MC_ACC,
+
+                                                                                        AOD_PROTECTION) ) );
+  }
+
   if(FILL_TREE_LcTopKpi == 1) {
     AliAnalysisTaskSELc2V0bachelor *stdTask =
       reinterpret_cast<AliAnalysisTaskSELc2V0bachelor*>(gInterpreter->ProcessLine(Form(".x %s (\"%s\",        \
@@ -186,7 +248,7 @@ void run_validation()
 
                                                                                         DEFAULT_CUT_FILE_OBJECTS["Lc2pKpi"].first.c_str(),
                                                                                         DEFAULT_CUT_FILE_OBJECTS["Lc2pKpi"].second.c_str()) ) );
-  }
+  }/*
   AliAnalysisTaskSEHFTreeCreator *treeCreatorTask =
     reinterpret_cast<AliAnalysisTaskSEHFTreeCreator*>(gInterpreter->ProcessLine(Form(".x %s (%d, %d, \"%s\", \"%s\", %d,  \
                                                                                              %d, %d,                      \
@@ -250,7 +312,7 @@ void run_validation()
                                                                                      FILL_PARTICLE_TREE,
                                                                                      FILL_TRACKLET_TREE,
                                                                                      FILL_NJET_TREES,
-                                                                                     FILL_JET_CONSTITUENT_TREES) ) );
+                                                                                     FILL_JET_CONSTITUENT_TREES) ) );*/
 
   if(!mgr->InitAnalysis()) {
     return;
